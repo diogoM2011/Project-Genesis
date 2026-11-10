@@ -1,0 +1,18 @@
+# Build output
+/build/
+/iso/
+
+# Compiled objects and binaries
+*.o
+*.a
+*.so
+*.elf
+*.bin
+*.iso
+
+# Editor / OS files
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*~

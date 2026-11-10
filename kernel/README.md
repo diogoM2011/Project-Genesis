@@ -1,44 +1,34 @@
-# Kernel source
+# Código-fonte do kernel
 
-The entry point and initialization path stay as small as possible. A subsystem
-gets its own directory as soon as it outgrows a few lines, so this file is the
-map of where things belong.
+O ponto de entrada e o caminho de inicialização ficam o menores possível. Um subsistema ganha seu próprio diretório assim que cresce além de algumas linhas, então este arquivo é o mapa de onde cada coisa mora.
 
 ```text
 kernel/
-├── main.c              entry point (kmain): wires subsystems together and reports the hand-off
+├── main.c              ponto de entrada (kmain): liga os subsistemas e reporta a entrega do boot
 ├── arch/
-│   └── x86_64/         CPU- and platform-specific code
-├── drivers/            device drivers (timer, keyboard, storage, ...)
-├── mm/                 physical and virtual memory management
-├── sched/              kernel threads and scheduling
-├── fs/                 filesystems
-└── lib/                freestanding helpers shared by the kernel (formatting, strings, ...)
+│   └── x86_64/         código específico de CPU e plataforma
+├── drivers/            drivers de dispositivo (timer, teclado, armazenamento, ...)
+├── mm/                 gerenciamento de memória física e virtual
+├── sched/              threads de kernel e escalonamento
+├── fs/                 sistemas de arquivos
+└── lib/                utilitários freestanding compartilhados pelo kernel (formatação, strings, ...)
 ```
 
-Headers mirror this layout under `include/`, so a header path always says which
-implementation it belongs to: `include/arch/x86_64/serial.h` pairs with
-`kernel/arch/x86_64/serial.c`.
+Os headers espelham esta estrutura em `include/`, então o caminho de um header sempre diz a qual implementação ele pertence: `include/arch/x86_64/serial.h` combina com `kernel/arch/x86_64/serial.c`.
 
-## Current contents
+## Conteúdo atual
 
-| Path | What it holds |
+| Caminho | O que tem |
 |---|---|
-| `main.c` | `kmain`: initializes the serial console, decodes the boot hand-off, reports the result, halts |
-| `arch/x86_64/serial.c` | 16550 UART driver on COM1 (115200 8N1, polling) |
-| `arch/x86_64/boot_info.c` | Multiboot1/Multiboot2 decoding: bootloader name and memory sizes |
-| `drivers/`, `mm/`, `sched/`, `fs/`, `lib/` | empty, kept with a `.gitkeep` until the first real file arrives |
+| `main.c` | `kmain`: inicializa o console serial, decodifica a entrega do boot, reporta o resultado e para a CPU |
+| `arch/x86_64/serial.c` | driver da UART 16550 em COM1 (115200 8N1, polling) |
+| `arch/x86_64/boot_info.c` | decodificação de Multiboot1/Multiboot2: nome do bootloader e tamanhos de memória |
+| `drivers/`, `mm/`, `sched/`, `fs/`, `lib/` | vazios, mantidos com um `.gitkeep` até chegar o primeiro arquivo real |
 
-## Rules
+## Regras
 
-1. **`main.c` stays tiny.** It may initialize subsystems and print diagnostics.
-   Any logic that has a name of its own belongs to a subsystem.
-2. **Architecture-specific code goes under `arch/x86_64/`.** Port I/O, MSRs,
-   interrupt frames, page-table formats and boot protocols are not portable; do
-   not let them leak into `main.c` or `lib/`.
-3. **`lib/` must stay freestanding.** No hosted C library calls, no allocation
-   before the allocator exists.
-4. **One subsystem per directory change.** A new directory appears in the same
-   change that adds its first real source file, and the `.gitkeep` is removed then.
-5. **The bootloader stub is not here.** The 32-bit entry code, page tables, GDT
-   and linker script live in `boot/`, because they run before C can.
+1. **`main.c` fica pequeno.** Ele pode inicializar subsistemas e imprimir diagnósticos. Qualquer lógica que tenha nome próprio pertence a um subsistema.
+2. **Código específico de arquitetura vai em `arch/x86_64/`.** Port I/O, MSRs, frames de interrupção, formatos de tabela de página e protocolos de boot não são portáveis; não os deixe vazar para `main.c` ou `lib/`.
+3. **`lib/` tem que continuar freestanding.** Nenhuma chamada de biblioteca hospedeira, nenhuma alocação antes de o alocador existir.
+4. **Um subsistema por mudança de diretório.** Um diretório novo aparece na mesma mudança que traz seu primeiro arquivo-fonte de verdade, e o `.gitkeep` sai nesse momento.
+5. **O stub do bootloader não fica aqui.** O código de entrada de 32 bits, as tabelas de página, a GDT e o linker script vivem em `boot/`, porque rodam antes de existir C.

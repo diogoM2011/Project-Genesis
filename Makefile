@@ -41,9 +41,12 @@ endif
 
 LDFLAGS := -nostdlib -static -z max-page-size=0x1000 -T boot/linker.ld
 
-C_SOURCES   := $(wildcard kernel/*.c)
+# Source discovery is recursive up to three levels, so a subsystem can move into
+# its own directory (kernel/arch/x86_64/..., kernel/mm/...) without touching
+# this file. `find` is not used: make's wildcard keeps it shell-independent.
+C_SOURCES   := $(wildcard kernel/*.c kernel/*/*.c kernel/*/*/*.c)
 ASM_SOURCES := $(wildcard boot/*.s)
-HEADERS     := $(wildcard include/*.h)
+HEADERS     := $(wildcard include/*.h include/*/*.h include/*/*/*.h)
 
 OBJECTS := $(patsubst boot/%.s,$(BUILD)/boot/%.o,$(ASM_SOURCES)) \
            $(patsubst kernel/%.c,$(BUILD)/kernel/%.o,$(C_SOURCES))

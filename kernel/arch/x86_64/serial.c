@@ -5,8 +5,8 @@
  * which is the QEMU default and matches most terminal programs.
  */
 
-#include <io.h>
-#include <serial.h>
+#include <arch/x86_64/io.h>
+#include <arch/x86_64/serial.h>
 
 /* 16550 register offsets from the base I/O port. */
 #define UART_DATA        0 /* also divisor low when DLAB = 1 */

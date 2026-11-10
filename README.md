@@ -40,9 +40,18 @@ Project Genesis is an educational x86_64 kernel written in C and Assembly. The i
 Project-Genesis/
 ├── boot/           # Boot protocol and early entry code
 ├── docs/           # Design notes and learning material
-├── include/        # Kernel headers
-├── kernel/         # Kernel implementation
-├── scripts/        # Build and run helper scripts
+├── include/                  # Kernel headers (mirrors the kernel/ layout)
+│   └── arch/x86_64/          #   io.h, serial.h, boot_info.h
+├── kernel/                   # Kernel implementation
+│   ├── main.c                #   entry point: the smallest possible init path
+│   ├── arch/                 #   CPU- and platform-specific code
+│   │   └── x86_64/           #     serial console, boot information decoding
+│   ├── drivers/              #   device drivers
+│   ├── mm/                   #   physical and virtual memory management
+│   ├── sched/                #   kernel threads and scheduling
+│   ├── fs/                   #   filesystems
+│   └── lib/                  #   freestanding helpers shared by the kernel
+├── scripts/                  # Build and run helper scripts
 ├── tests/          # Test plans and future automated tests
 ├── .gitignore
 ├── CONTRIBUTING.md
@@ -131,13 +140,15 @@ than assumed zero: the loader is not required to zero a `NOBITS` section.
 
 ### 3. The kernel side
 
-`kernel/main.c` is freestanding C with no dependency on a hosted library.
-`kmain` validates the boot magic, walks the Multiboot information tags to find
-the bootloader name and the memory map, and reports each milestone. If the
-magic is wrong it says so instead of continuing with an invalid structure —
-the kernel never trusts the loader blindly.
+`kernel/main.c` is freestanding C with no dependency on a hosted library, and
+it stays as small as possible: it initializes the serial console, asks the boot
+subsystem to decode the hand-off, and reports the result. All protocol detail
+lives in `kernel/arch/x86_64/boot_info.c`, which walks the Multiboot2 tag list
+(or the Multiboot1 structure) to find the bootloader name and the memory sizes.
+A wrong magic value yields protocol `unknown` instead of an invalid structure,
+so the kernel never trusts the loader blindly.
 
-`kernel/serial.c` drives a 16550-compatible UART at **COM1 (0x3F8)**: it
+`kernel/arch/x86_64/serial.c` drives a 16550-compatible UART at **COM1 (0x3F8)**: it
 disables interrupts, sets the divisor latch for 115200 baud, selects 8 data
 bits / no parity / one stop bit, enables the FIFO, and then polls the
 transmitter-empty bit before each byte. No interrupts are needed yet, which
